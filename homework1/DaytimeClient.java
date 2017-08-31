@@ -12,7 +12,7 @@ public class DaytimeClient {
       try {
         runClient(portNumber);
       } catch (Exception e) {
-        System.out.println(e.getMessage());
+        System.out.println("Error: " + e.getMessage());
       }
     }
   }
@@ -37,7 +37,7 @@ public class DaytimeClient {
     String response = in.readLine();
     in.close();
     if (response != null) {
-      System.out.println(response);
+      System.out.println("Server response: " + response);
     }
   }
 

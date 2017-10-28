@@ -61,25 +61,10 @@ int main()
 
   set_server_address(&server_address);
 
-  /***************************************************/
-  /* Current State: CLOSED */
-  /* Event: SET UP TCB */
-  /* New State: LISTEN */
- /***************************************************/
   bind_socket_to_address(server_socket, &server_address);
 
-  /***************************************************/
-  /* Current State: LISTEN */
-  /* Event: Receives SYN, Sends SYN+ACK */
-  /* New State: SYN-RECEIVED */
-   /***************************************************/
   listen_on_socket(server_socket);
 
-  /***************************************************/
-  /* Current State: SYN-RECEIVED */
-  /* Event: Receives ACK */
-  /* New State: ESTABLISHED */
-   /***************************************************/
   /*---- Accept call creates a new socket for the incoming connection ----*/
   client_socket = accept(server_socket, (struct sockaddr *) NULL, NULL);
   sleep(300);

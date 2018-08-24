@@ -66,9 +66,10 @@ int main()
 
       if (tcp_header.control_bits == 18) {
         printf("Client received syn-ack -> sending ack\n");
-        int seq_temp = tcp_header.seq_number;
+        int seq_temp = tcp_header.ack_number;
         set_tcp_header();
-        tcp_header.seq_number = seq_temp + 1;
+        tcp_header.seq_number = seq_temp;
+        tcp_header.ack_number = 1;
         tcp_header.control_bits = 2;
         write(server_socket, &tcp_header, 20);
         break;
@@ -80,7 +81,7 @@ int main()
   }
 
   // begin exchange
-  FILE * file = fopen("output.jpg", "a+");
+  FILE * file = fopen("output.png", "wb");
   while (1) {
     if (recv(server_socket, &tcp_header, 1520, 0) > -1) {
       printf("Client Received chunk:\n");
@@ -90,8 +91,16 @@ int main()
         printf("Received fin\n");
         break;
       }
-      fprintf(file, tcp_header.data);
+
+      if (fwrite(tcp_header.data, 1, 1500, file) != 1500) {
+        printf("error\n");
+        exit(1);
+      }
+
+      int seq_temp = tcp_header.ack_number;
       set_tcp_header();
+      tcp_header.seq_number = seq_temp;
+      tcp_header.ack_number = 1501;
       // set ack
       tcp_header.control_bits = 16;
       print_tcp_header();

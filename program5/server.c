@@ -8,6 +8,7 @@
 #include <arpa/inet.h>
 #include "list_node.h"
 #include "linked_list.h"
+#include <pthread.h>
 
 struct pseudo_header
 {
@@ -28,6 +29,7 @@ void set_server_address(struct sockaddr_in * server_address);
 void bind_socket_to_address(int server_socket, struct sockaddr_in * server_address);
 void listen_on_socket(int server_socket);
 void print_tcp_header();
+void * run_timer(struct pseudo_header tcp_header);
 
 char ip_address[16] = "127.0.0.1\0";
 
@@ -100,7 +102,7 @@ int main()
   FILE * fileptr;
   long filelen;
 
-  fileptr = fopen("image.jpg", "rb");
+  fileptr = fopen("img.png", "rb");
 
   while (fread(buffer, 1, 1500, fileptr) > 0) {
     add_node(&head, buffer);
@@ -112,10 +114,15 @@ int main()
   // Start sending data
   while (head != NULL) {
     printf("Server sending file chunk\n");
+    int seq_temp = tcp_header.ack_number;
     set_tcp_header();
+    tcp_header.seq_number = seq_temp;
+
     memcpy(tcp_header.data, head->data, 1500);
     write(client_socket, &tcp_header, 1520);
 
+    pthread_t thread;
+    
     // wait for ack
     recv(client_socket, &tcp_header, 1520, 0);
     printf("Server received:\n");
@@ -124,7 +131,7 @@ int main()
     if (tcp_header.control_bits == 16) {
       printf("Server received acknowledgement -> sending next chunk\n");
       delete_front(&head);
-     }
+    }
     else {
       printf("Error invalid flag received");
       break;
@@ -148,8 +155,8 @@ void set_tcp_header()
 {
   tcp_header.source_port = port_number;
   tcp_header.dest_port = connecting_port;;
-  tcp_header.seq_number = tcp_header.seq_number++;
-  tcp_header.ack_number = 0;
+  //tcp_header.seq_number = tcp_header.seq_number++;
+  tcp_header.ack_number = 1;
   tcp_header.data_off_res_data = 0;
   tcp_header.control_bits = 0;
   tcp_header.window = 1500;
@@ -196,7 +203,6 @@ void listen_on_socket(int server_socket)
 
 void print_tcp_header()
 {
-  printf("Size: %u\n", (uint)sizeof(tcp_header));
   printf("Source Port: %u\n", (uint)tcp_header.source_port);
   printf("Destination Port: %u\n", (uint)tcp_header.dest_port);
   printf("Sequence Number: %u\n", (uint)tcp_header.seq_number);
@@ -208,4 +214,9 @@ void print_tcp_header()
   printf("Window: %u\n", (uint)tcp_header.window);
   printf("Checksum: %u\n", (uint)tcp_header.checksum);
   printf("Urgent pointer: %u\n\n", (uint)tcp_header.u_pointer);
+}
+
+void * run_timer(struct pseudo_header tcp_header)
+{
+
 }
